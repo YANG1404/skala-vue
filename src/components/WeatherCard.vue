@@ -53,7 +53,7 @@ const emit = defineEmits(['select-card', 'click-detail'])
                     </div>
 
                     
-                    <button class="detail-btn" @click.stop="emit('click-detail', weather.name, weather.status)">상세보기</button>
+                    <button class="detail-btn" @click.stop="emit('click-detail', weather.id)">상세보기</button>
                 </li>
             </ul>
             

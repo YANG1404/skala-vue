@@ -17,10 +17,11 @@ sunsetTime(예상일몰시간),
 */
 <script setup>
 import {ref, computed, watch, watchEffect} from 'vue'
-import BaseDashboardCard from './BaseDashboardCard.vue'
-import SearchBar from './SearchBar.vue'
-import WeatherCard from './WeatherCard.vue'
-import DustFilterButton from './DustFilterButton.vue'
+import { useRouter } from 'vue-router'
+import BaseDashboardCard from '../components/BaseDashboardCard.vue'
+import SearchBar from '../components/SearchBar.vue'
+import WeatherCard from '../components/WeatherCard.vue'
+import DustFilterButton from '../components/DustFilterButton.vue'
 const weatherList = ref([
   {
     id: 'city_01',
@@ -240,8 +241,9 @@ const dustfilteredList = computed(()=> {
 })
 
 // 반응형 함수
-const showDetail = (cityName, status) => {
-window.alert(`${cityName}의 현재 날씨는 [${status}] 상태입니다.`)
+const showDetail = (cityId) => {
+  // window.alert()는 지우고, router.push()를 사용해 해당 경로로 강제 이동시킵니다.
+  router.push('/weather/' + cityId) 
 }
 const updateMessage = (cityName) => {
     selectedCityInfo.value = `[${cityName}]이 선택되었습니다.`
@@ -257,6 +259,10 @@ watchEffect(() => {
 watchEffect(()=>{
   console.log(`[watchEffect 자동 감지]미세 먼지 경보 지역 표시 : ${isDustAlertMode.value}`)
 })
+
+const router = useRouter()
+
+
 
 </script>
 
