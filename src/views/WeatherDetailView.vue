@@ -4,13 +4,20 @@ import { useRoute, useRouter } from 'vue-router'
 import BaseDashboardCard from '../components/BaseDashboardCard.vue' // 예쁜 배경 박스 재사용
 import { computed } from 'vue' // vue에서 computed 꺼내오기
 import { useConfigStore } from '../stores/configStore' // 스토어 불러오기
+import axios from 'axios'
 
 
 const route = useRoute()
 const router = useRouter()
 
-// 화면에 보여줄 1개의 도시 데이터를 담을 변수
 const cityWeather = ref(null)
+const tourPlaces = ref([]) // 💡 추천 관광지 목록을 담을 반응형 배열
+
+const API_KEY = 'e744be6ad3d213b5fdb13f1f5277fa15'
+// 💡 발급받은 공공데이터포털 일반 인증키(Decoding)를 여기에 넣으세요!
+const TOUR_API_KEY = decodeURIComponent('ZHEOyKeUqnBnZfNeeLHz%2BVRcsscgc3ZaBrqkXNkDXCrN%2BbQ0Js2hx906tNZu%2Flg%2BPGdQPDGKRfm6VTs2VxNLIQ%3D%3D')
+
+// 화면에 보여줄 1개의 도시 데이터를 담을 변수
 
 const configStore = useConfigStore()
 
@@ -24,21 +31,146 @@ const displayTemp = computed(() => {
     return rawTemp
 })
 
-// 💡 과제 요구사항: 도시 코드에 해당하는 Mock Data를 임시로 활용 (Home에 있던 배열 복사)
-const weatherList = [
-    { id: 'city_01', name: '서울', temp: 26.5, status: '맑음', humidity: 55, windSp: 2.3 },
-    { id: 'city_02', name: '경기', temp: 25.0, status: '구름조금', humidity: 60, windSp: 1.8 },
-    { id: 'city_03', name: '인천', temp: 24.2, status: '흐림', humidity: 70, windSp: 4.1 },
-    // (여기에 나머지 도시 데이터도 복사해서 넣어주세요!)
-]
+const cityQueries = {
+    city_01: 'Seoul', city_02: 'Gyeonggi-do', city_03: 'Incheon',
+    city_04: 'Gangwon-do', city_05: 'Daejeon', city_06: 'Gwangju',
+    city_07: 'Daegu', city_08: 'Busan', city_09: 'Ulsan',
+    city_10: 'Jeju', city_11: 'Jeonju', city_12: 'Gyeongju'
+}
 
-// 컴포넌트가 화면에 나타날 때(Mount 시점) 데이터를 찾습니다.
-onMounted(() => {
-    // 1. 주소창(/weather/:cityId)에서 cityId 값을 가져옵니다. (예: 'city_01')
+const cityNames = {
+    city_01: '서울', city_02: '경기', city_03: '인천', city_04: '강원',
+    city_05: '대전', city_06: '광주', city_07: '대구', city_08: '부산',
+    city_09: '울산', city_10: '제주', city_11: '전주', city_12: '경주'
+}
+
+const fetchCityWeather = async (cityId) => {
+    const query = cityQueries[cityId]
+    const name = cityNames[cityId]
+
+    if (!query || !name) return null
+
+    const weatherUrl = 'https://api.openweathermap.org/data/2.5/weather'
+    const weatherResponse = await axios.get(weatherUrl, {
+        params: {
+            q: query,
+            appid: API_KEY,
+            units: 'metric',
+            lang: 'kr'
+        }
+    })
+    const weatherData = weatherResponse.data
+
+    const pollutionUrl = 'https://api.openweathermap.org/data/2.5/air_pollution'
+    const pollutionResponse = await axios.get(pollutionUrl, {
+        params: {
+            lat: weatherData.coord.lat,
+            lon: weatherData.coord.lon,
+            appid: API_KEY
+        }
+    })
+    const pollutionData = pollutionResponse.data.list?.[0]?.components
+
+    const uvUrl = 'https://api.openweathermap.org/data/2.5/uvi'
+    const uvResponse = await axios.get(uvUrl, {
+        params: {
+            lat: weatherData.coord.lat,
+            lon: weatherData.coord.lon,
+            appid: API_KEY
+        }
+    })
+
+    const formatTime = (unixTime) => new Intl.DateTimeFormat('ko-KR', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: 'UTC'
+    }).format(new Date((unixTime + weatherData.timezone) * 1000))
+
+    return {
+        id: cityId,
+        name,
+        temp: weatherData.main.temp,
+        apparentTemp: weatherData.main.feels_like,
+        status: weatherData.weather[0].description,
+        weatherMain: weatherData.weather[0].main,
+        humidity: weatherData.main.humidity,
+        windSp: weatherData.wind.speed,
+        dust: pollutionData?.pm10 ?? 0,
+        ultraDust: pollutionData?.pm2_5 ?? 0,
+        uv: uvResponse.data.value,
+        sunriseTime: formatTime(weatherData.sys.sunrise),
+        sunsetTime: formatTime(weatherData.sys.sunset)
+    }
+}
+
+const fetchTourPlaces = async (cityName, weatherMain, dustValue) => {
+    try {
+        // 1. 날씨와 미세먼지에 따른 검색 키워드 자동 선정
+        // OpenWeatherMap의 날씨 상태(Clear, Rain, Clouds 등)와 미세먼지 수치를 활용합니다.
+        let keyword = `${cityName} 공원` // 기본값: 야외 추천
+        
+        if (weatherMain === 'Rain' || weatherMain === 'Thunderstorm' || dustValue >= 50) {
+            keyword = `${cityName} 박물관` // 비가 오거나 미세먼지가 나쁘면 실내 추천
+        }
+
+        // 2. 한국관광공사 키워드 검색 API 호출 (JSON 형식, 최대 3개)
+        const url = `https://apis.data.go.kr/B551011/KorService2/searchKeyword2`
+        const response = await axios.get(url, {
+            params: {
+                serviceKey: TOUR_API_KEY,
+                numOfRows: 3,
+                pageNo: 1,
+                MobileOS: 'ETC',
+                MobileApp: 'WeatherDashboard',
+                _type: 'json',
+                arrange: 'A', // 정렬 (A: 제목순, O: 제목순 등)
+                keyword: keyword
+            }
+        })
+
+        // API 응답 데이터 구조에 맞춰 장소 아이템 추출
+        let items = response.data?.response?.body?.items?.item
+
+        if (!items) {
+            const fallbackResponse = await axios.get(url, {
+                params: {
+                    serviceKey: TOUR_API_KEY,
+                    numOfRows: 3,
+                    pageNo: 1,
+                    MobileOS: 'ETC',
+                    MobileApp: 'WeatherDashboard',
+                    _type: 'json',
+                    arrange: 'A',
+                    keyword: cityName
+                }
+            })
+            items = fallbackResponse.data?.response?.body?.items?.item
+        }
+        tourPlaces.value = Array.isArray(items) ? items : (items ? [items] : [])
+        
+    } catch (error) {
+        console.error('❌ 관광지 데이터를 가져오는 데 실패했습니다:', error)
+    }
+}
+
+// 컴포넌트가 화면에 나타날 때 실제 날씨와 관광지 데이터를 가져옵니다.
+onMounted(async () => {
     const currentId = route.params.cityId
-    
-    // 2. 전체 날씨 리스트에서 id가 똑같은 도시를 찾아 cityWeather 변수에 넣습니다.
-    cityWeather.value = weatherList.find(weather => weather.id === currentId)
+
+    try {
+        cityWeather.value = await fetchCityWeather(currentId)
+
+        if (cityWeather.value) {
+            await fetchTourPlaces(
+                cityWeather.value.name,
+                cityWeather.value.weatherMain,
+                cityWeather.value.dust
+            )
+        }
+    } catch (error) {
+        console.error('❌ 상세 날씨 데이터를 가져오는 데 실패했습니다:', error)
+    }
 })
 
 const goBack = () => {
@@ -53,14 +185,34 @@ const goBack = () => {
         <!-- 데이터를 찾기 전이거나 잘못된 주소로 왔을 때 에러 방지용 v-if -->
         <BaseDashboardCard v-if="cityWeather">
             <div class="detail-info">
-                <h3>📍 지정 지역: 대한민국 {{ cityWeather.name }}</h3>
+                <h3>📍 {{ cityWeather.name }} 날씨 상세 정보</h3>
                 <p>🌡️ 실시간 기온: {{ displayTemp }}{{ configStore.unitSymbol }}</p>
                 <p>🌤️ 기상 현황: {{ cityWeather.status }}</p>
                 <p>💧 대기 습도: {{ cityWeather.humidity }}%</p>
                 <p>🌬️ 현재 풍속: {{ cityWeather.windSp }}m/s</p>
+                <p>😷 미세먼지: {{ cityWeather.dust }} μg/m³</p>
+                <p>🫁 초미세먼지: {{ cityWeather.ultraDust }} μg/m³</p>
+                <p>☀️ 자외선 지수: {{ cityWeather.uv }}</p>
+                <p>🌅 일출: {{ cityWeather.sunriseTime }}</p>
+                <p>🌇 일몰: {{ cityWeather.sunsetTime }}</p>
+            </div>
+
+            <div class="recommend-section">
+                <h4>날씨 데이터 기반 지역 관광지 추천(한국관광공사)</h4>
+                <div v-if="tourPlaces.length > 0" class="place-grid">
+                    <div v-for="place in tourPlaces" :key="place.contentid" class="place-card">
+                        <!-- 관광지 대표 이미지 (있을 경우만 표시) -->
+                        <img v-if="place.firstimage" :src="place.firstimage" :alt="place.title" class="place-img" />
+                        <div class="place-info">
+                        <h5>{{ place.title }}</h5>
+                        <p class="place-addr">📍 {{ place.addr1 }}</p>
+                        </div>
+                    </div>
+                </div>
+                <p v-else class="no-place">현재 조건에 맞는 추천 장소를 불러오는 중이거나 데이터가 없습니다.</p>
             </div>
             
-            <button class="back-btn" @click="goBack">← 메인 대시보드로 돌아가기</button>
+            <button class="back-btn" @click="router.go(-1)">← 돌아가기</button>
         </BaseDashboardCard>
         
         <BaseDashboardCard v-else>
@@ -91,5 +243,60 @@ const goBack = () => {
 }
 .back-btn:hover {
     background-color: #2563eb;
+}
+.recommend-section {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+    text-align: left;
+}
+
+.recommend-section h4 {
+    margin-bottom: 15px;
+    color: #333;
+    font-size: 1.1rem;
+}
+
+.place-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 15px;
+}
+
+.place-card {
+    background: #f9f9f9;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+}
+
+.place-img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+}
+
+.place-info {
+    padding: 12px;
+}
+
+.place-info h5 {
+    font-size: 1rem;
+    margin: 0 0 5px 0;
+    color: #222;
+}
+
+.place-addr {
+    font-size: 0.85rem;
+    color: #666;
+    margin: 0;
+}
+
+.no-place {
+    font-size: 0.9rem;
+    color: #888;
+    font-style: italic;
 }
 </style>

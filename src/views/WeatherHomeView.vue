@@ -16,13 +16,14 @@ sunriseTime(예상일출시간),
 sunsetTime(예상일몰시간),
 */
 <script setup>
-import {ref, computed, watch, watchEffect} from 'vue'
+import {ref, computed, watch, watchEffect, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useConfigStore } from '../stores/configStore'
 import BaseDashboardCard from '../components/BaseDashboardCard.vue'
 import SearchBar from '../components/SearchBar.vue'
 import WeatherCard from '../components/WeatherCard.vue'
 import DustFilterButton from '../components/DustFilterButton.vue'
+import axios from 'axios'
 const weatherList = ref([
   {
     id: 'city_01',
@@ -223,8 +224,89 @@ const selectedCityInfo = ref('카드를 클릭하거나 검색해 보세요.')
 //나만의 반응형 변수
 const isDustAlertMode = ref(false)
 const configStore = useConfigStore()
+const router = useRouter()
+const API_KEY = 'e744be6ad3d213b5fdb13f1f5277fa15'
 
+const getWindDirection = (degree) => {
+  const directions = ['북', '북동', '동', '남동', '남', '남서', '서', '북서']
+  return directions[Math.round(degree / 45) % 8]
+}
 
+const formatTime = (unixTime, timezone) => {
+  return new Intl.DateTimeFormat('ko-KR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'UTC'
+  }).format(new Date((unixTime + timezone) * 1000))
+}
+
+const fetchRealWeather = async () => {
+    // 💡 OWM API가 정확히 인식할 수 있도록 한글-영문 매칭 테이블을 만듭니다.
+    const cityEngNames = {
+        '서울': 'Seoul', '경기': 'Gyeonggi-do', '인천': 'Incheon', 
+        '강원': 'Gangwon-do', '대전': 'Daejeon', '광주': 'Gwangju', 
+        '대구': 'Daegu', '부산': 'Busan', '울산': 'Ulsan', 
+        '제주': 'Jeju', '전주': 'Jeonju', '경주': 'Gyeongju'
+    }
+
+    // weatherList 배열을 돌면서 각각의 도시 날씨를 요청합니다.
+    for (let i = 0; i < weatherList.value.length; i++) {
+        const city = weatherList.value[i]
+        
+        // 💡 매칭 테이블에서 영어 이름을 가져옵니다.
+        const engName = cityEngNames[city.name] 
+        
+        // 💡 try-catch를 for문 안으로 넣어서, 하나가 실패해도 다음 도시로 넘어가게 합니다!
+        try {
+            // 1. 기존: 실시간 날씨 데이터 요청
+            const url = `https://api.openweathermap.org/data/2.5/weather?q=${engName}&appid=${API_KEY}&units=metric&lang=kr`
+            const response = await axios.get(url)
+            const realData = response.data
+
+            weatherList.value[i].temp = realData.main.temp           
+            weatherList.value[i].apparentTemp = realData.main.feels_like
+            weatherList.value[i].humidity = realData.main.humidity   
+            weatherList.value[i].windSp = realData.wind.speed        
+            weatherList.value[i].windDirect = getWindDirection(realData.wind.deg)
+            weatherList.value[i].status = realData.weather[0].description 
+            weatherList.value[i].sunriseTime = formatTime(realData.sys.sunrise, realData.timezone)
+            weatherList.value[i].sunsetTime = formatTime(realData.sys.sunset, realData.timezone)
+            
+            // 💡 2. 추가: 방금 받아온 데이터에서 위도(lat)와 경도(lon) 추출
+            const lat = realData.coord.lat
+            const lon = realData.coord.lon
+
+            // 💡 3. 추가: 추출한 위경도로 대기오염도 API 호출
+            const pollutionUrl = 'https://api.openweathermap.org/data/2.5/air_pollution'
+            const pollutionResponse = await axios.get(pollutionUrl, {
+              params: { lat, lon, appid: API_KEY }
+            })
+            const pollutionData = pollutionResponse.data
+
+            // 💡 4. 추가: 미세먼지(PM10) 수치를 진짜 데이터로 덮어씌우기
+            // (OWM 데이터 구조상 list[0].components.pm10 에 미세먼지 값이 있습니다)
+            weatherList.value[i].dust = pollutionData.list[0].components.pm10
+            weatherList.value[i].ultraDust = pollutionData.list[0].components.pm2_5
+
+            const uvUrl = 'https://api.openweathermap.org/data/2.5/uvi'
+            const uvResponse = await axios.get(uvUrl, {
+              params: { lat, lon, appid: API_KEY }
+            })
+            weatherList.value[i].uv = uvResponse.data.value
+            
+        } catch (error) {
+            // 어떤 도시에서 에러가 났는지 콘솔에 띄워줍니다.
+            console.error(`❌ [${city.name}] 날씨 데이터를 가져오는데 실패했습니다.`, error)
+        }
+    }
+    console.log("✅ 실시간 날씨 데이터 연동 완료!")
+}
+
+// 💡 화면이 처음 켜질 때(Mount) 위에서 만든 함수를 자동으로 실행합니다.
+onMounted(() => {
+    fetchRealWeather()
+})
 
 //computed
 // 날씨 리스트 중 사용자가 입력한 검색어(searchQuery)에 포함된 항목만 필터링
@@ -262,7 +344,7 @@ watchEffect(()=>{
   console.log(`[watchEffect 자동 감지]미세 먼지 경보 지역 표시 : ${isDustAlertMode.value}`)
 })
 
-const router = useRouter()
+
 
 
 
