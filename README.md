@@ -1,44 +1,39 @@
-# skala-vue
+# SKALA Vue.js 날씨 대시보드 및 맞춤 관광지 추천 앱 🌤️
 
-This template should help get you started developing with Vue 3 in Vite.
+## 1. 프로젝트 개요 및 과제 수행 내역
+본 프로젝트는 Vue 3 및 Vue Router, Pinia, Axios 등을 활용하여 날씨 대시보드를 구현한 과제 결과물입니다. [cite: 1] 주어진 과제 요구사항에 따라 다음과 같은 기능들을 구현하였습니다.
 
-## Recommended IDE Setup
+*   **Vue 기본 문법 및 렌더링:** `v-for`를 이용한 날씨 데이터 배열 렌더링, `v-if`를 활용한 온도(25도 기준)별 라벨(더움/선선함) 조건부 렌더링을 구현했습니다. [cite: 1, 2]
+*   **반응형 상태 관리 및 컴포지션 API:** `ref`와 `computed`를 활용해 도시 검색 필터링을 구현하였고, `watch`와 `watchEffect`로 상태 변화를 감지하여 콘솔 로그를 출력하도록 했습니다. [cite: 1, 2]
+*   **컴포넌트 분리:** 단일 파일이었던 코드를 `WeatherHomeView`, `BaseDashboardCard`, `SearchBar`, `WeatherCard` 등으로 모듈화하고, Props와 Emit을 통한 단방향 데이터 흐름을 확립했습니다. [cite: 1, 2]
+*   **Vue Router 적용 (SPA):** 지연 로딩(Lazy Loading) 및 동적 라우팅(`/:cityId`), 프로그래매틱 네비게이션(`router.push`), Catch-all 라우팅(404 Not Found)을 적용하여 새로고침 없는 화면 전환을 구현했습니다. [cite: 1, 2]
+*   **Pinia 전역 상태 관리:** `configStore`를 구축하여 온도 단위(섭씨/화씨)를 전역 상태로 관리하고 앱 전체에 즉각적으로 반영되도록 했습니다. [cite: 1, 2]
+*   **Axios 및 외부 API 연동:** OpenWeatherMap API(현재 날씨, 대기 오염도, 자외선)와 공공데이터포털 한국관광공사 API를 연동하여 실시간 데이터를 불러왔습니다. [cite: 1, 2]
+*   **UI 라이브러리 및 배포:** 상세 페이지에 Element Plus UI(`el-descriptions`, `el-image` 등)를 적용하였고, ESLint 품질 검사와 `.env.local` 환경 변수 관리를 거쳐 Vercel에 정적 호스팅 배포를 완료했습니다. [cite: 1, 2]
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+## 2. 💡 개인별 Customization (추가 구현 사항)
+과제의 기본 요구사항을 넘어, 실무적인 사용성과 UI/UX를 향상시키기 위해 다음과 같은 기능을 독자적으로 기획하고 추가했습니다.
 
-## Recommended Browser Setup
+*   **미세먼지 경보 필터 컴포넌트 (`DustFilterButton.vue`) 분리 및 전역화:** 미세먼지 수치가 50 이상인 지역만 걸러서 보여주는 필터 기능을 추가했습니다. [cite: 2] 초기에는 메인 뷰에 종속된 상태였으나, 이를 `configStore` (Pinia)의 전역 상태(`isDustAlertMode`)로 이관하여 다른 탭에 다녀와도 필터 상태가 유지되도록 고도화했습니다. [cite: 2]
+*   **날씨 맞춤 나들이 추천 시스템 (한국관광공사 API 연동):** 단순 날씨 조회를 넘어, 해당 지역의 날씨 상태(맑음, 비 등)와 미세먼지 수치를 종합적으로 판단하여 맑은 날에는 '공원' 같은 야외 관광지를, 비가 오거나 미세먼지가 나쁜 날에는 '박물관' 같은 실내 관광지를 추천하는 큐레이션 기능을 구현했습니다. [cite: 2] (조건에 맞는 검색 결과가 없을 경우 도시명으로 재검색하는 Fallback 로직 추가) [cite: 2]
+*   **날씨 상세 카드 UI 고도화:** 기존 요구사항인 온도와 상태 외에, 어제와의 온도차(↑, ↓ 화살표 적용), 체감온도, 습도, 풍향, 풍속, 미세먼지(PM10), 초미세먼지(PM2.5), 자외선, 일출/일몰 시간까지 제공하도록 Grid/Flex 레이아웃을 확장하고 파스텔톤 동적 스타일링을 적용했습니다. [cite: 2]
+*   **커스텀 View 3종 추가 구축:** 요구사항(1종 추가)을 초과 달성하여, `WeatherFavoritesView`(즐겨찾기), `WeatherStatsView`(날씨 통계), `WeatherSettingsView`(환경설정) 총 3개의 추가 페이지를 라우터에 등록하고 네비게이션을 확장했습니다. [cite: 2]
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+## 3. 🚨 트러블슈팅 (문제 발생 및 해결 과정)
+개발 진행 중 마주친 주요 기술적 문제들과 그 해결 과정입니다.
 
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
-
-```sh
-npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
-npm run dev
-```
-
-### Compile and Minify for Production
-
-```sh
-npm run build
-```
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
-npm run lint
-```
+*   **한글 입력 지연(깨짐) 현상:**
+    *   *문제:* 검색창에서 `v-model` 사용 시 한글 입력이 한 박자 늦게 반영되는 현상 발생. [cite: 2]
+    *   *해결:* `v-model` 대신 `:value="searchQuery"`와 `@input` 이벤트를 조합하여 양방향 바인딩을 직접 구현하여 지연 없는 한글 검색을 달성했습니다. [cite: 2]
+*   **이벤트 버블링(Bubbling) 문제:**
+    *   *문제:* 카드 내부의 [상세보기] 버튼 클릭 시, 카드를 선택하는 상위 이벤트까지 연달아 실행되는 현상. [cite: 2]
+    *   *해결:* Vue의 이벤트 수식어인 `@click.stop`을 활용하여 이벤트 전파를 차단했습니다. [cite: 2]
+*   **관광공사 API 400 Bad Request 및 서비스 폐기 오류:**
+    *   *문제:* 기존 `KorService1/searchKeyword1` 엔드포인트 호출 시 서비스 폐기 오류가 났고, VITE 환경변수에 저장된 인코딩된 인증키가 Axios의 `params` 객체를 거치며 이중 인코딩되어 인증 오류(401/400)가 발생했습니다. [cite: 2] 또한 `listYN` 파라미터가 버전업되면서 지원되지 않아 에러를 발생시켰습니다. [cite: 2]
+    *   *해결:* 엔드포인트를 `KorService2/searchKeyword2`로 최신화하고, 지원하지 않는 `listYN` 파라미터를 삭제했습니다. [cite: 2] 환경변수의 인증키는 `decodeURIComponent()`를 통해 디코딩 처리한 후 Axios에 전달하여 이중 인코딩 문제를 깔끔하게 해결했습니다. [cite: 2]
+*   **특정 API 요청 실패 시 앱 전체 렌더링 중단 현상:**
+    *   *문제:* 여러 도시의 날씨 데이터를 순회하며 불러올 때(for문), 단일 `try-catch` 블록으로 인해 특정 도시에서 오류가 발생하면 나머지 도시들의 API 요청까지 모두 중단되는 현상이 있었습니다. [cite: 2]
+    *   *해결:* `try-catch` 블록을 `for`문 내부로 이동시켜 독립적인 에러 핸들링이 가능하게 함으로써, 하나의 API 요청이 실패하더라도 다른 지역의 데이터 연동은 정상적으로 계속되도록 안전성을 높였습니다. [cite: 2]
+*   **Vercel 배포 후 SPA 라우팅 404 및 API 401 오류:**
+    *   *문제:* Vercel 배포 후 상세 페이지 등에서 새로고침 시 404 에러가 발생했고, API 호출 시 401 인증 에러가 발생했습니다. [cite: 2]
+    *   *해결:* Vue Router의 History 모드 특성상 발생하는 404 문제를 해결하기 위해 `vercel.json`을 추가하여 모든 경로를 `/index.html`로 리다이렉트 (Rewrite) 처리했습니다. [cite: 2] 401 에러의 경우 Vercel Project Settings에 환경변수(`VITE_OPENWEATHER_API_KEY` 등)를 Production 환경으로 주입하고 Redeploy하여 해결했습니다. [cite: 2]
