@@ -2,12 +2,27 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseDashboardCard from '../components/BaseDashboardCard.vue' // 예쁜 배경 박스 재사용
+import { computed } from 'vue' // vue에서 computed 꺼내오기
+import { useConfigStore } from '../stores/configStore' // 스토어 불러오기
+
 
 const route = useRoute()
 const router = useRouter()
 
 // 화면에 보여줄 1개의 도시 데이터를 담을 변수
 const cityWeather = ref(null)
+
+const configStore = useConfigStore()
+
+const displayTemp = computed(() => {
+    if (!cityWeather.value) return 0 // 데이터 로딩 전 에러 방지
+    
+    const rawTemp = cityWeather.value.temp
+    if (configStore.unit === 'fahrenheit') {
+        return Math.round((rawTemp * 9) / 5 + 32)
+    }
+    return rawTemp
+})
 
 // 💡 과제 요구사항: 도시 코드에 해당하는 Mock Data를 임시로 활용 (Home에 있던 배열 복사)
 const weatherList = [
@@ -39,7 +54,7 @@ const goBack = () => {
         <BaseDashboardCard v-if="cityWeather">
             <div class="detail-info">
                 <h3>📍 지정 지역: 대한민국 {{ cityWeather.name }}</h3>
-                <p>🌡️ 실시간 기온: {{ cityWeather.temp }}°C</p>
+                <p>🌡️ 실시간 기온: {{ displayTemp }}{{ configStore.unitSymbol }}</p>
                 <p>🌤️ 기상 현황: {{ cityWeather.status }}</p>
                 <p>💧 대기 습도: {{ cityWeather.humidity }}%</p>
                 <p>🌬️ 현재 풍속: {{ cityWeather.windSp }}m/s</p>

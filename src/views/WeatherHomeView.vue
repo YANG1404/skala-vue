@@ -18,6 +18,7 @@ sunsetTime(예상일몰시간),
 <script setup>
 import {ref, computed, watch, watchEffect} from 'vue'
 import { useRouter } from 'vue-router'
+import { useConfigStore } from '../stores/configStore'
 import BaseDashboardCard from '../components/BaseDashboardCard.vue'
 import SearchBar from '../components/SearchBar.vue'
 import WeatherCard from '../components/WeatherCard.vue'
@@ -221,6 +222,7 @@ const searchQuery = ref('')
 const selectedCityInfo = ref('카드를 클릭하거나 검색해 보세요.')
 //나만의 반응형 변수
 const isDustAlertMode = ref(false)
+const configStore = useConfigStore()
 
 
 
@@ -232,9 +234,9 @@ const filteredWeatherList= computed(()=>{
   })
 })
 const dustfilteredList = computed(()=> {
-  if(isDustAlertMode.value){
+  if(configStore.isDustAlertMode){
     return filteredWeatherList.value.filter((weather)=>{
-      return weather.dust>=50
+      return weather.dust >= 50
     })
   }
   return filteredWeatherList.value
@@ -276,10 +278,7 @@ const router = useRouter()
         
         <div class="stats-header">
             <h2>지역별 날씨 현황</h2>
-            <DustFilterButton 
-                :isDustAlertMode="isDustAlertMode" 
-                @toggle-dust-mode="isDustAlertMode = !isDustAlertMode" 
-            />
+            <DustFilterButton />
         </div>
         <ul class="card-container" v-if="dustfilteredList.length > 0">
             <WeatherCard 

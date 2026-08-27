@@ -1,9 +1,27 @@
 <script setup>
-import { defineEmits,defineProps } from 'vue';
+import { defineProps, defineEmits, computed } from 'vue' // 💡 computed 추가
+import { useConfigStore } from '../stores/configStore'  // 💡 스토어 불러오기
 
-defineProps({ weather: Object })
+// 1. props를 변수에 담아줍니다.
+const props = defineProps({
+    weather: Object
+})
 
 const emit = defineEmits(['select-card', 'click-detail'])
+
+// 2. 스토어 장착
+const configStore = useConfigStore()
+
+// 3. 온도 변환 로직 (computed를 쓰면 스위치를 누를 때마다 자동으로 재계산됩니다!)
+const displayTemp = computed(() => {
+    const rawTemp = props.weather.temp // 원본 섭씨 온도
+    
+    if (configStore.unit === 'fahrenheit') {
+        // 화씨로 변환 (과제 요구사항 공식)
+        return Math.round((rawTemp * 9) / 5 + 32) 
+    }
+    return rawTemp // 섭씨면 원본 그대로 반환
+})
 
 
 
@@ -14,7 +32,7 @@ const emit = defineEmits(['select-card', 'click-detail'])
     <ul class="card-container" >
                 <li @click="emit('select-card',weather.name)" :key="weather.id" class="weather-card" >
                     <h3>{{weather.name}}</h3>
-                    <div class="main-temp">{{ weather.temp }}°</div>
+                    <div class="main-temp">{{ displayTemp }}{{ configStore.unitSymbol }}</div>
                     <p class="hot" v-if="weather.temp >= 25.0">🔥 더움</p>
                     <p class="cool" v-else>🍃 선선함</p>
                     <div class="temp-gap">

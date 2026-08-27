@@ -1,21 +1,15 @@
 <script setup>
-import { defineProps, defineEmits } from 'vue'
+import { useConfigStore } from '../stores/configStore'
 
-// 1. 부모로부터 현재 알림 모드가 켜져있는지(true/false) 상태를 받습니다.
-defineProps({
-    isDustAlertMode: Boolean
-})
-
-// 2. 부모에게 쏴줄 이벤트 이름표를 만듭니다.
-const emit = defineEmits(['toggle-dust-mode'])
+const configStore = useConfigStore()
 </script>
 
 <template>
-    <!-- 💡 클릭 시 직접 값을 바꾸지 않고, 부모에게 'toggle-dust-mode' 신호를 보냅니다 -->
+    <!-- 버튼 클릭 시 스토어의 함수를 바로 실행합니다 -->
     <button 
         class="filter-btn" 
-        :class="{ active: isDustAlertMode }" 
-        @click="emit('toggle-dust-mode')"
+        :class="{ active: configStore.isDustAlertMode }" 
+        @click="configStore.toggleDustMode()"
     >
         😷 미세먼지 경보 (50 이상) 필터
     </button>

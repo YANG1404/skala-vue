@@ -1,11 +1,11 @@
 <script setup>
 import { RouterLink, RouterView } from 'vue-router'
+import UnitToggler from './components/UnitToggler.vue'
 </script>
 
 <template>
   <div class="app-container">
-    <header>
-      <!-- 💡 메뉴가 5개로 늘어났습니다! -->
+    <header class="header-container">
       <nav class="nav-bar">
         <RouterLink to="/" class="nav-link">☁️ 날씨 대시보드</RouterLink>
         <RouterLink to="/favorites" class="nav-link">⭐ 즐겨찾기</RouterLink>
@@ -13,6 +13,9 @@ import { RouterLink, RouterView } from 'vue-router'
         <RouterLink to="/settings" class="nav-link">⚙️ 환경설정</RouterLink>
         <RouterLink to="/about" class="nav-link">ℹ️ 서비스 소개</RouterLink>
       </nav>
+      
+      <!-- 💡 네비게이션 바 우측에 배치될 단위 변경 컴포넌트 -->
+      <UnitToggler />
     </header>
 
     <main>
@@ -28,14 +31,19 @@ import { RouterLink, RouterView } from 'vue-router'
     padding: 20px;
 }
 
+.header-container {
+    display: flex;
+    justify-content: space-between; /* 💡 왼쪽은 메뉴, 오른쪽은 버튼으로 양끝으로 쫙 찢어줍니다! */
+    align-items: center;
+    border-bottom: 2px solid #e0e0e0;
+    padding-bottom: 15px;
+    margin-bottom: 40px;
+}
+
 /* 네비게이션 바 전체 컨테이너 */
 .nav-bar {
     display: flex;
-    justify-content: center;
     gap: 10px;
-    margin-bottom: 40px;
-    border-bottom: 2px solid #e0e0e0;
-    padding-bottom: 15px;
 }
 
 /* 개별 메뉴 링크 기본 스타일 */
