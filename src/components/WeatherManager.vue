@@ -215,7 +215,7 @@ const weatherList = ref([
 const searchQuery = ref('')
 const selectedCityInfo = ref('카드를 클릭하거나 검색해 보세요.')
 //나만의 반응형 변수
-const isDustAlertMode = ref(true)
+const isDustAlertMode = ref(false)
 
 
 
@@ -257,9 +257,7 @@ watchEffect(()=>{
 </script>
 
 <template>
-    <h1>과제 1: 날씨 (Mockup)</h1>
-    <button @click="isDustAlertMode = !isDustAlertMode">미세먼지 경보 on/off </button>
-    <p>미세먼지 경보 지역 필터: {{ isDustAlertMode }}</p>
+    <h1>오늘의 날씨</h1>
     <div class="weather searching">
         <h2>도시 검색</h2>
         <input :value="searchQuery" @input="searchQuery = $event.target.value" placeholder="검색할 도시 이름 입력" class="inputbox"/>
@@ -268,19 +266,67 @@ watchEffect(()=>{
     </div>
     
     <div class="weather stats">
+      <div class="stats-header">
         <h2>지역별 날씨 현황</h2>
+        <button 
+                class="filter-btn" 
+                :class="{ active: isDustAlertMode }" 
+                @click="isDustAlertMode = !isDustAlertMode"
+            >
+                😷 미세먼지 경보 (50 이상) 필터
+        </button>
+      </div>
         <ul class="card-container" v-if="dustfilteredList.length > 0">
             <li @click="updateMessage(weather.name)" v-for="weather in dustfilteredList" :key="weather.id" class="weather-card" >
                 <h3>{{weather.name}}</h3>
-                <p >현재 온도: {{ weather.temp }}</p>
+                <div class="main-temp">{{ weather.temp }}°</div>
                 <p class="hot" v-if="weather.temp >= 25.0">🔥 더움</p>
                 <p class="cool" v-else>🍃 선선함</p>
-                <button @click.stop="showDetail(weather.name, weather.status)">상세보기</button>
+                <div class="temp-gap">
+                    어제보다 {{ Math.abs(weather.tempGap) }}° 
+                    <span v-if="weather.tempGap > 0" class="up">↑</span>
+                    <span v-else-if="weather.tempGap < 0" class="down">↓</span>
+                    <span v-else>-</span>
+                    / {{ weather.status }}
+                </div>
+
+                <div class="sub-info">
+                    체감 {{ weather.apparentTemp }}° &bull; 습도 {{ weather.humidity }}% &bull; {{ weather.windDirect }}풍 {{ weather.windSp }}m/s
+                </div>
+
+                <div class="detail-boxes">
+                    <div class="info-box dust">
+                        <span class="label">미세먼지</span>
+                        <span class="value">{{ weather.dust }}</span>
+                    </div>
+                    <div class="info-box ultra-dust">
+                        <span class="label">초미세먼지</span>
+                        <span class="value">{{ weather.ultraDust }}</span>
+                    </div>
+                    <div class="info-box uv">
+                        <span class="label">자외선</span>
+                        <span class="value">{{ weather.uv }}</span>
+                    </div>
+                    <div class="info-box sunrise">
+                        <span class="label">일출</span>
+                        <span class="value">{{ weather.sunriseTime }}</span>
+                    </div>
+                    <div class="info-box sunset">
+                        <span class="label">일몰</span>
+                        <span class="value">{{ weather.sunsetTime }}</span>
+                    </div>
+                </div>
+
+                
+                <button class="detail-btn" @click.stop="showDetail(weather.name, weather.status)">상세보기</button>
             </li>
         </ul>
         <p v-else> 검색 결과와 일치하는 도시가 없습니다.</p>
+      
     </div>
-        <p>{{ selectedCityInfo }}</p>
+        <div class="selected-info">
+            <p>{{ selectedCityInfo }}</p>
+        </div>
     <div>
 
     </div>
@@ -308,50 +354,165 @@ watchEffect(()=>{
 
     /* 1. 리스트 컨테이너 설정 (Grid 레이아웃) */
     .card-container {
-        list-style: none;         /* 기본 리스트 점 없애기 */
-        padding: 0;               /* 기본 여백 없애기 */
+        list-style: none;
+        padding: 0;
         margin: 0;
-        display: grid;            /* 격자 형태 레이아웃 사용 */
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* 화면 크기에 맞춰 카드 개수 자동 조절 */
-        gap: 16px;                /* 카드 사이의 간격 */
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); 
+        gap: 20px;
     }
 
-    /* 2. 개별 카드 디자인 */
-    .weather-card {
-        background-color: #f8f9fa;          /* 카드 배경색 (아주 연한 회색) */
-        border: 1px solid #e0e0e0;          /* 카드 테두리 */
-        border-radius: 8px;                 /* 카드 모서리 둥글게 */
-        padding: 20px;                      /* 카드 안쪽 여백 */
-        text-align: center;                 /* 글자 가운데 정렬 */
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02); /* 옅은 그림자 */
-        transition: transform 0.2s ease;    /* 애니메이션 속도 설정 */
-    }
-
-    /* 마우스 올렸을 때 애니메이션 (선택사항) */
-    .weather-card:hover {
-        transform: translateY(-5px);        /* 위로 살짝 떠오르는 효과 */
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); /* 그림자 진하게 */
-    }
-
-    /* 3. 카드 안의 텍스트 디자인 */
-    .weather-card h3 {
-        margin: 0 0 10px 0;
-        font-size: 1.2rem;
-        color: #333;
-    }
     
-    .weather-card .hot {
-        margin: 0;
-        font-size: 1.1rem;
-        font-weight: bold;
-        color: #ff0000; /* 온도 글자색 (파란색) */
+
+    /* 카드 내부 정렬 */
+    .weather-card {
+        background-color: #ffffff;
+        border: 1px solid #e0e0e0;
+        border-radius: 16px; /* 더 둥글게 */
+        padding: 24px;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
 
-    .weather-card .cool {
+    .weather-card .hot {background-color:#dc2626;  padding: 5px; border-radius: 5px; color: white;}
+    .weather-card .cool {background-color: #3b82f6;  padding: 5px; border-radius: 5px; color:white;}
+
+    .weather-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    .weather-card h3 {
         margin: 0;
+        font-size: 1.2rem;
+        color: #555;
+    }
+
+    /* 메인 온도 디자인 */
+    .main-temp {
+        font-size: 3.5rem;
+        font-weight: 800;
+        color: #222;
+        margin: 10px 0;
+        line-height: 1;
+    }
+
+    /* 어제와의 차이 */
+    .temp-gap {
         font-size: 1.1rem;
         font-weight: bold;
-        color: #007bff; /* 온도 글자색 (파란색) */
+        color: #333;
+        margin-bottom: 8px;
+    }
+    .temp-gap .up { color: #dc2626; } /* 빨간색 화살표 */
+    .temp-gap .down { color: #2563eb; } /* 파란색 화살표 */
+
+
+    /* 서브 정보 (체감, 습도 등) */
+    .sub-info {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #666;
+        margin-bottom: 20px;
+    }
+
+    /* 하단 4개 상세 박스 레이아웃 */
+    .detail-boxes {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 8px;
+        width: 100%;
+        margin-bottom: 16px;
+    }
+
+    /* 상세 박스 공통 디자인 */
+    .info-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 4px;
+        border-radius: 8px;
+        gap: 4px;
+    }
+
+    .info-box .label {
+        font-size: 0.75rem;
+        color: #555;
+    }
+
+    .info-box .value {
+        font-size: 1rem;
+        font-weight: bold;
+    }
+
+    /* 상세 박스 개별 색상 (사진 참고) */
+    .info-box.dust, .info-box.ultra-dust { background-color: #eff6ff; color: #3b82f6; }
+    .info-box.uv { background-color: #f0fdf4; color: #22c55e; }
+    .info-box.sunrise { background-color: #fffbeb; color: #f59e0b; }
+    .info-box.sunset { background-color: #ffe4dc; color: #f5360b; }
+
+    .selected-info {
+        font-size: 1.1rem;
+        background-color: #b8ffa7;
+        padding: 5px; 
+        border-radius: 5px; 
+        color: rgb(17, 117, 0);
+    }
+
+    /* 상세보기 버튼 수정 */
+    .detail-btn {
+        width: 100%;
+        padding: 10px;
+        background-color: #f3f4f6;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        color: #555;
+        margin-top: auto;
+    }
+    .detail-btn:hover {
+        background-color: #e5e7eb;
+    }
+
+    /* === 미세먼지 필터 버튼 및 헤더 디자인 === */
+    
+    /* 제목과 버튼을 양끝 정렬하여 한 줄에 배치 */
+    .stats-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .stats-header h2 {
+        margin: 0; /* 제목의 기본 여백 제거 */
+    }
+
+    /* 토글 버튼 기본 (꺼진 상태) */
+    .filter-btn {
+        padding: 8px 16px;
+        border: 2px solid #e0e0e0;
+        background-color: #ffffff;
+        color: #888;
+        border-radius: 20px; /* 둥근 알약 모양 */
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 0.9rem;
+        transition: all 0.2s ease; /* 부드러운 색상 전환 효과 */
+    }
+
+    /* 토글 버튼 활성화 (켜진 상태) */
+    .filter-btn.active {
+        border-color: #f63b3b;      /* 파란색 테두리 */
+        background-color: #ffefef;  /* 연한 파란색 배경 */
+        color: #f63b3b;             /* 파란색 글씨 */
+        box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
     }
 
 </style>
