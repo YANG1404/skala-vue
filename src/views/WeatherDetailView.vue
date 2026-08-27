@@ -186,15 +186,16 @@ const goBack = () => {
         <BaseDashboardCard v-if="cityWeather">
             <div class="detail-info">
                 <h3>📍 {{ cityWeather.name }} 날씨 상세 정보</h3>
-                <p>🌡️ 실시간 기온: {{ displayTemp }}{{ configStore.unitSymbol }}</p>
-                <p>🌤️ 기상 현황: {{ cityWeather.status }}</p>
-                <p>💧 대기 습도: {{ cityWeather.humidity }}%</p>
-                <p>🌬️ 현재 풍속: {{ cityWeather.windSp }}m/s</p>
-                <p>😷 미세먼지: {{ cityWeather.dust }} μg/m³</p>
-                <p>🫁 초미세먼지: {{ cityWeather.ultraDust }} μg/m³</p>
-                <p>☀️ 자외선 지수: {{ cityWeather.uv }}</p>
-                <p>🌅 일출: {{ cityWeather.sunriseTime }}</p>
-                <p>🌇 일몰: {{ cityWeather.sunsetTime }}</p>
+                <el-descriptions :column="1" border>
+                    <el-descriptions-item label="기온">{{ displayTemp }}{{ configStore.unitSymbol }}</el-descriptions-item>
+                    <el-descriptions-item label="날씨">{{ cityWeather.status }}</el-descriptions-item>
+                    <el-descriptions-item label="습도">{{ cityWeather.humidity }}%</el-descriptions-item>
+                    <el-descriptions-item label="풍속">{{ cityWeather.windSp }}m/s</el-descriptions-item>
+                    <el-descriptions-item label="미세먼지">{{ cityWeather.dust }} μg/m³</el-descriptions-item>
+                    <el-descriptions-item label="초미세먼지">{{ cityWeather.ultraDust }} μg/m³</el-descriptions-item>
+                    <el-descriptions-item label="자외선">{{ cityWeather.uv }}</el-descriptions-item>
+                    <el-descriptions-item label="일출/일몰">{{ cityWeather.sunriseTime }} / {{ cityWeather.sunsetTime }}</el-descriptions-item>
+                </el-descriptions>
             </div>
 
             <div class="recommend-section">
@@ -202,22 +203,22 @@ const goBack = () => {
                 <div v-if="tourPlaces.length > 0" class="place-grid">
                     <div v-for="place in tourPlaces" :key="place.contentid" class="place-card">
                         <!-- 관광지 대표 이미지 (있을 경우만 표시) -->
-                        <img v-if="place.firstimage" :src="place.firstimage" :alt="place.title" class="place-img" />
+                        <el-image v-if="place.firstimage" :src="place.firstimage" :alt="place.title" fit="cover" class="place-img" />
                         <div class="place-info">
                         <h5>{{ place.title }}</h5>
                         <p class="place-addr">📍 {{ place.addr1 }}</p>
                         </div>
                     </div>
                 </div>
-                <p v-else class="no-place">현재 조건에 맞는 추천 장소를 불러오는 중이거나 데이터가 없습니다.</p>
+                <el-empty v-else description="현재 조건에 맞는 추천 장소가 없습니다." />
             </div>
             
-            <button class="back-btn" @click="router.go(-1)">← 돌아가기</button>
+            <el-button class="back-btn" type="primary" @click="router.go(-1)">← 돌아가기</el-button>
         </BaseDashboardCard>
         
         <BaseDashboardCard v-else>
-            <p>데이터를 불러오는 중이거나 잘못된 접근입니다.</p>
-            <button class="back-btn" @click="goBack">돌아가기</button>
+            <el-alert title="데이터를 불러오는 중이거나 잘못된 접근입니다." type="warning" :closable="false" />
+            <el-button class="back-btn" type="primary" @click="goBack">돌아가기</el-button>
         </BaseDashboardCard>
     </div>
 </template>

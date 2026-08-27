@@ -22,7 +22,7 @@ const onInput = (event) => {
     .inputbox {
         width: 80%;
         height: 40px;
-        border: 1px solid #000000;  
+        border: 1px solid #000000;
         font-size: 20px;
     }
 </style>
