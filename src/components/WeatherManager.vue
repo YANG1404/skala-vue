@@ -1,0 +1,518 @@
+// weatherList 항목(열) 추가
+/* weatherList 항목 
+id(key), 
+name(지역), 
+temp(온도), 
+tempGap(전날과의 온도차이), 
+status(기상상태), 
+apparentTemp(체감온도), 
+humidity(습도),
+windDirect(풍향),
+windSp(풍속),
+dust(미세먼지),
+ultraDust(초미세먼지),
+uv(자외선),
+sunriseTime(예상일출시간),
+sunsetTime(예상일몰시간),
+*/
+<script setup>
+import {ref, computed, watch, watchEffect} from 'vue'
+const weatherList = ref([
+  {
+    id: 'city_01',
+    name: '서울',
+    temp: 26.5,
+    tempGap: 1.2,
+    status: '맑음',
+    apparentTemp: 27.8,
+    humidity: 55,
+    windDirect: '북동',
+    windSp: 2.3,
+    dust: 45,       // ㎍/㎥ 단위 기준 수치
+    ultraDust: 22,  // ㎍/㎥ 단위 기준 수치
+    uv: 7,          // UV 지수 (0~11+)
+    sunriseTime: '06:05',
+    sunsetTime: '19:23'
+  },
+  {
+    id: 'city_02',
+    name: '경기',
+    temp: 25.0,
+    tempGap: -0.5,
+    status: '구름조금',
+    apparentTemp: 26.1,
+    humidity: 60,
+    windDirect: '북동',
+    windSp: 1.8,
+    dust: 52,
+    ultraDust: 45,
+    uv: 5,
+    sunriseTime: '06:06',
+    sunsetTime: '19:22'
+  },
+  {
+    id: 'city_03',
+    name: '인천',
+    temp: 24.2,
+    tempGap: 0.0,
+    status: '흐림',
+    apparentTemp: 25.5,
+    humidity: 70,
+    windDirect: '북서',
+    windSp: 4.1,
+    dust: 25,
+    ultraDust: 12,
+    uv: 2,
+    sunriseTime: '06:07',
+    sunsetTime: '19:24'
+  },
+  {
+    id: 'city_04',
+    name: '강원',
+    temp: 21.5,
+    tempGap: -2.3,
+    status: '비',
+    apparentTemp: 21.0,
+    humidity: 85,
+    windDirect: '동',
+    windSp: 3.5,
+    dust: 18,
+    ultraDust: 9,
+    uv: 1,
+    sunriseTime: '05:58',
+    sunsetTime: '19:15'
+  },
+  {
+    id: 'city_05',
+    name: '대전',
+    temp: 28.1,
+    tempGap: 2.5,
+    status: '맑음',
+    apparentTemp: 29.5,
+    humidity: 50,
+    windDirect: '남서',
+    windSp: 1.2,
+    dust: 85,
+    ultraDust: 55,
+    uv: 9,
+    sunriseTime: '06:04',
+    sunsetTime: '19:18'
+  },
+  {
+    id: 'city_06',
+    name: '광주',
+    temp: 29.3,
+    tempGap: 1.8,
+    status: '구름많음',
+    apparentTemp: 31.0,
+    humidity: 65,
+    windDirect: '남',
+    windSp: 2.0,
+    dust: 40,
+    ultraDust: 20,
+    uv: 6,
+    sunriseTime: '06:08',
+    sunsetTime: '19:20'
+  },
+  {
+    id: 'city_07',
+    name: '대구',
+    temp: 31.2,
+    tempGap: 3.1,
+    status: '맑음',
+    apparentTemp: 33.5,
+    humidity: 45,
+    windDirect: '동',
+    windSp: 1.5,
+    dust: 55,
+    ultraDust: 15,
+    uv: 10,
+    sunriseTime: '05:59',
+    sunsetTime: '19:12'
+  },
+  {
+    id: 'city_08',
+    name: '부산',
+    temp: 27.8,
+    tempGap: 0.5,
+    status: '맑음',
+    apparentTemp: 29.1,
+    humidity: 60,
+    windDirect: '남동',
+    windSp: 4.5,
+    dust: 28,
+    ultraDust: 14,
+    uv: 8,
+    sunriseTime: '05:57',
+    sunsetTime: '19:10'
+  },
+  {
+    id: 'city_09',
+    name: '울산',
+    temp: 28.5,
+    tempGap: 1.0,
+    status: '구름조금',
+    apparentTemp: 30.2,
+    humidity: 55,
+    windDirect: '남동',
+    windSp: 3.8,
+    dust: 30,
+    ultraDust: 18,
+    uv: 7,
+    sunriseTime: '05:56',
+    sunsetTime: '19:09'
+  },
+  {
+    id: 'city_10',
+    name: '제주',
+    temp: 26.0,
+    tempGap: -1.2,
+    status: '비',
+    apparentTemp: 27.5,
+    humidity: 90,
+    windDirect: '남서',
+    windSp: 6.5,
+    dust: 15,
+    ultraDust: 8,
+    uv: 2,
+    sunriseTime: '06:12',
+    sunsetTime: '19:21'
+  },
+  {
+    id: 'city_11',
+    name: '전주',
+    temp: 28.5,
+    tempGap: 1.5,
+    status: '구름많음',
+    apparentTemp: 30.1,
+    humidity: 60,
+    windDirect: '서',
+    windSp: 2.1,
+    dust: 42,
+    ultraDust: 25,
+    uv: 6,
+    sunriseTime: '06:06',
+    sunsetTime: '19:19'
+  },
+  {
+    id: 'city_12',
+    name: '경주',
+    temp: 30.0,
+    tempGap: 2.0,
+    status: '맑음',
+    apparentTemp: 32.2,
+    humidity: 50,
+    windDirect: '남동',
+    windSp: 1.8,
+    dust: 35,
+    ultraDust: 16,
+    uv: 9,
+    sunriseTime: '05:58',
+    sunsetTime: '19:11'
+  }
+])
+//반응형 변수
+const searchQuery = ref('')
+const selectedCityInfo = ref('카드를 클릭하거나 검색해 보세요.')
+//나만의 반응형 변수
+const isDustAlertMode = ref(false)
+
+
+
+//computed
+// 날씨 리스트 중 사용자가 입력한 검색어(searchQuery)에 포함된 항목만 필터링
+const filteredWeatherList= computed(()=>{
+  return weatherList.value.filter((weather) => {
+    return weather.name.includes(searchQuery.value) 
+  })
+})
+const dustfilteredList = computed(()=> {
+  if(isDustAlertMode.value){
+    return filteredWeatherList.value.filter((weather)=>{
+      return weather.dust>=50
+    })
+  }
+  return filteredWeatherList.value
+})
+
+// 반응형 함수
+const showDetail = (cityName, status) => {
+window.alert(`${cityName}의 현재 날씨는 [${status}] 상태입니다.`)
+}
+const updateMessage = (cityName) => {
+    selectedCityInfo.value = `[${cityName}]이 선택되었습니다.`
+}
+
+//watch,watchEffect
+watch (selectedCityInfo,(newInfo,oldInfo)=>{
+  console.log(`[watch 감지] 상태 바 문구 업테이트: ${oldInfo} -> ${newInfo}`)
+})
+watchEffect(() => {
+  console.log(`[watchEffect 자동 감지] 현재 검색어 ${searchQuery.value}에 매칭되는 API 데이터 서칭`)
+}) 
+watchEffect(()=>{
+  console.log(`[watchEffect 자동 감지]미세 먼지 경보 지역 표시 : ${isDustAlertMode.value}`)
+})
+
+</script>
+
+<template>
+    <h1>오늘의 날씨</h1>
+    <div class="weather searching">
+        <h2>도시 검색</h2>
+        <input :value="searchQuery" @input="searchQuery = $event.target.value" placeholder="검색할 도시 이름 입력" class="inputbox"/>
+        <p>검색 중인 도시: {{searchQuery}}</p>
+
+    </div>
+    
+    <div class="weather stats">
+      <div class="stats-header">
+        <h2>지역별 날씨 현황</h2>
+        <button 
+                class="filter-btn" 
+                :class="{ active: isDustAlertMode }" 
+                @click="isDustAlertMode = !isDustAlertMode"
+            >
+                😷 미세먼지 경보 (50 이상) 필터
+        </button>
+      </div>
+        <ul class="card-container" v-if="dustfilteredList.length > 0">
+            <li @click="updateMessage(weather.name)" v-for="weather in dustfilteredList" :key="weather.id" class="weather-card" >
+                <h3>{{weather.name}}</h3>
+                <div class="main-temp">{{ weather.temp }}°</div>
+                <p class="hot" v-if="weather.temp >= 25.0">🔥 더움</p>
+                <p class="cool" v-else>🍃 선선함</p>
+                <div class="temp-gap">
+                    어제보다 {{ Math.abs(weather.tempGap) }}° 
+                    <span v-if="weather.tempGap > 0" class="up">↑</span>
+                    <span v-else-if="weather.tempGap < 0" class="down">↓</span>
+                    <span v-else>-</span>
+                    / {{ weather.status }}
+                </div>
+
+                <div class="sub-info">
+                    체감 {{ weather.apparentTemp }}° &bull; 습도 {{ weather.humidity }}% &bull; {{ weather.windDirect }}풍 {{ weather.windSp }}m/s
+                </div>
+
+                <div class="detail-boxes">
+                    <div class="info-box dust">
+                        <span class="label">미세먼지</span>
+                        <span class="value">{{ weather.dust }}</span>
+                    </div>
+                    <div class="info-box ultra-dust">
+                        <span class="label">초미세먼지</span>
+                        <span class="value">{{ weather.ultraDust }}</span>
+                    </div>
+                    <div class="info-box uv">
+                        <span class="label">자외선</span>
+                        <span class="value">{{ weather.uv }}</span>
+                    </div>
+                    <div class="info-box sunrise">
+                        <span class="label">일출</span>
+                        <span class="value">{{ weather.sunriseTime }}</span>
+                    </div>
+                    <div class="info-box sunset">
+                        <span class="label">일몰</span>
+                        <span class="value">{{ weather.sunsetTime }}</span>
+                    </div>
+                </div>
+
+                
+                <button class="detail-btn" @click.stop="showDetail(weather.name, weather.status)">상세보기</button>
+            </li>
+        </ul>
+        <p v-else> 검색 결과와 일치하는 도시가 없습니다.</p>
+      
+    </div>
+        <div class="selected-info">
+            <p>{{ selectedCityInfo }}</p>
+        </div>
+    <div>
+
+    </div>
+    
+
+</template>
+
+<style scoped>
+    .weather {
+        background-color: #e4eaec;      /* 배경색 흰색 */
+        border: 1px solid #e0e0e0;      /* 연한 회색 테두리 */
+        border-radius: 12px;            /* 모서리 둥글게 */
+        padding: 20px;                  /* 안쪽 여백 */
+        margin-bottom: 20px;            /* 박스 아래쪽 바깥 여백 (박스 간 간격) */
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); /* 부드러운 그림자 */
+    }
+    .inputbox {
+        width: 80%;
+        height: 40px;
+        border: 1px solid #000000;  
+        font-size: 20px;
+    }
+
+    /* === 추가할 카드 디자인 CSS === */
+
+    /* 1. 리스트 컨테이너 설정 (Grid 레이아웃) */
+    .card-container {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); 
+        gap: 20px;
+    }
+
+    
+
+    /* 카드 내부 정렬 */
+    .weather-card {
+        background-color: #ffffff;
+        border: 1px solid #e0e0e0;
+        border-radius: 16px; /* 더 둥글게 */
+        padding: 24px;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .weather-card .hot {background-color:#dc2626;  padding: 5px; border-radius: 5px; color: white;}
+    .weather-card .cool {background-color: #3b82f6;  padding: 5px; border-radius: 5px; color:white;}
+
+    .weather-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    .weather-card h3 {
+        margin: 0;
+        font-size: 1.2rem;
+        color: #555;
+    }
+
+    /* 메인 온도 디자인 */
+    .main-temp {
+        font-size: 3.5rem;
+        font-weight: 800;
+        color: #222;
+        margin: 10px 0;
+        line-height: 1;
+    }
+
+    /* 어제와의 차이 */
+    .temp-gap {
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 8px;
+    }
+    .temp-gap .up { color: #dc2626; } /* 빨간색 화살표 */
+    .temp-gap .down { color: #2563eb; } /* 파란색 화살표 */
+
+
+    /* 서브 정보 (체감, 습도 등) */
+    .sub-info {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #666;
+        margin-bottom: 20px;
+    }
+
+    /* 하단 4개 상세 박스 레이아웃 */
+    .detail-boxes {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 8px;
+        width: 100%;
+        margin-bottom: 16px;
+    }
+
+    /* 상세 박스 공통 디자인 */
+    .info-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 4px;
+        border-radius: 8px;
+        gap: 4px;
+    }
+
+    .info-box .label {
+        font-size: 0.75rem;
+        color: #555;
+    }
+
+    .info-box .value {
+        font-size: 1rem;
+        font-weight: bold;
+    }
+
+    /* 상세 박스 개별 색상 (사진 참고) */
+    .info-box.dust, .info-box.ultra-dust { background-color: #eff6ff; color: #3b82f6; }
+    .info-box.uv { background-color: #f0fdf4; color: #22c55e; }
+    .info-box.sunrise { background-color: #fffbeb; color: #f59e0b; }
+    .info-box.sunset { background-color: #ffe4dc; color: #f5360b; }
+
+    .selected-info {
+        font-size: 1.1rem;
+        background-color: #b8ffa7;
+        padding: 5px; 
+        border-radius: 5px; 
+        color: rgb(17, 117, 0);
+    }
+
+    /* 상세보기 버튼 수정 */
+    .detail-btn {
+        width: 100%;
+        padding: 10px;
+        background-color: #f3f4f6;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        color: #555;
+        margin-top: auto;
+    }
+    .detail-btn:hover {
+        background-color: #e5e7eb;
+    }
+
+    /* === 미세먼지 필터 버튼 및 헤더 디자인 === */
+    
+    /* 제목과 버튼을 양끝 정렬하여 한 줄에 배치 */
+    .stats-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .stats-header h2 {
+        margin: 0; /* 제목의 기본 여백 제거 */
+    }
+
+    /* 토글 버튼 기본 (꺼진 상태) */
+    .filter-btn {
+        padding: 8px 16px;
+        border: 2px solid #e0e0e0;
+        background-color: #ffffff;
+        color: #888;
+        border-radius: 20px; /* 둥근 알약 모양 */
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 0.9rem;
+        transition: all 0.2s ease; /* 부드러운 색상 전환 효과 */
+    }
+
+    /* 토글 버튼 활성화 (켜진 상태) */
+    .filter-btn.active {
+        border-color: #f63b3b;      /* 파란색 테두리 */
+        background-color: #ffefef;  /* 연한 파란색 배경 */
+        color: #f63b3b;             /* 파란색 글씨 */
+        box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
+    }
+
+</style>
