@@ -225,7 +225,7 @@ const selectedCityInfo = ref('카드를 클릭하거나 검색해 보세요.')
 const isDustAlertMode = ref(false)
 const configStore = useConfigStore()
 const router = useRouter()
-const API_KEY = 'e744be6ad3d213b5fdb13f1f5277fa15'
+const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY
 
 const getWindDirection = (degree) => {
   const directions = ['북', '북동', '동', '남동', '남', '남서', '서', '북서']

@@ -13,9 +13,9 @@ const router = useRouter()
 const cityWeather = ref(null)
 const tourPlaces = ref([]) // 💡 추천 관광지 목록을 담을 반응형 배열
 
-const API_KEY = 'e744be6ad3d213b5fdb13f1f5277fa15'
+const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY
 // 💡 발급받은 공공데이터포털 일반 인증키(Decoding)를 여기에 넣으세요!
-const TOUR_API_KEY = decodeURIComponent('ZHEOyKeUqnBnZfNeeLHz%2BVRcsscgc3ZaBrqkXNkDXCrN%2BbQ0Js2hx906tNZu%2Flg%2BPGdQPDGKRfm6VTs2VxNLIQ%3D%3D')
+const TOUR_API_KEY = decodeURIComponent(import.meta.env.VITE_TOUR_API_KEY)
 
 // 화면에 보여줄 1개의 도시 데이터를 담을 변수
 
