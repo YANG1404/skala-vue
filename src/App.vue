@@ -1,10 +1,11 @@
 <script setup>
-import WeatherManager from './components/WeatherManager.vue';
+
+import WeatherParent from './components/WeatherParent.vue';
 </script>
 
 <template>
   <div>
-    <WeatherManager/>
+    <WeatherParent/>
   </div>
 </template>
 

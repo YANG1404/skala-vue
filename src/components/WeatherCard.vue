@@ -1,0 +1,182 @@
+<script setup>
+import { defineEmits,defineProps } from 'vue';
+
+defineProps({ weather: Object })
+
+const emit = defineEmits(['select-card', 'click-detail'])
+
+
+
+
+</script>
+
+<template>
+    <ul class="card-container" >
+                <li @click="emit('select-card',weather.name)" :key="weather.id" class="weather-card" >
+                    <h3>{{weather.name}}</h3>
+                    <div class="main-temp">{{ weather.temp }}°</div>
+                    <p class="hot" v-if="weather.temp >= 25.0">🔥 더움</p>
+                    <p class="cool" v-else>🍃 선선함</p>
+                    <div class="temp-gap">
+                        어제보다 {{ Math.abs(weather.tempGap) }}° 
+                        <span v-if="weather.tempGap > 0" class="up">↑</span>
+                        <span v-else-if="weather.tempGap < 0" class="down">↓</span>
+                        <span v-else>-</span>
+                        / {{ weather.status }}
+                    </div>
+
+                    <div class="sub-info">
+                        체감 {{ weather.apparentTemp }}° &bull; 습도 {{ weather.humidity }}% &bull; {{ weather.windDirect }}풍 {{ weather.windSp }}m/s
+                    </div>
+
+                    <div class="detail-boxes">
+                        <div class="info-box dust">
+                            <span class="label">미세먼지</span>
+                            <span class="value">{{ weather.dust }}</span>
+                        </div>
+                        <div class="info-box ultra-dust">
+                            <span class="label">초미세먼지</span>
+                            <span class="value">{{ weather.ultraDust }}</span>
+                        </div>
+                        <div class="info-box uv">
+                            <span class="label">자외선</span>
+                            <span class="value">{{ weather.uv }}</span>
+                        </div>
+                        <div class="info-box sunrise">
+                            <span class="label">일출</span>
+                            <span class="value">{{ weather.sunriseTime }}</span>
+                        </div>
+                        <div class="info-box sunset">
+                            <span class="label">일몰</span>
+                            <span class="value">{{ weather.sunsetTime }}</span>
+                        </div>
+                    </div>
+
+                    
+                    <button class="detail-btn" @click.stop="emit('click-detail', weather.name, weather.status)">상세보기</button>
+                </li>
+            </ul>
+            
+
+</template>
+
+<style scoped>
+
+    
+
+    /* 카드 내부 정렬 */
+    .weather-card {
+        background-color: #ffffff;
+        border: 1px solid #e0e0e0;
+        border-radius: 16px; /* 더 둥글게 */
+        padding: 24px;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .weather-card .hot {background-color:#dc2626;  padding: 5px; border-radius: 5px; color: white;}
+    .weather-card .cool {background-color: #3b82f6;  padding: 5px; border-radius: 5px; color:white;}
+
+    .weather-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    .weather-card h3 {
+        margin: 0;
+        font-size: 1.2rem;
+        color: #555;
+    }
+
+    /* 메인 온도 디자인 */
+    .main-temp {
+        font-size: 3.5rem;
+        font-weight: 800;
+        color: #222;
+        margin: 10px 0;
+        line-height: 1;
+    }
+
+    /* 어제와의 차이 */
+    .temp-gap {
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 8px;
+    }
+    .temp-gap .up { color: #dc2626; } /* 빨간색 화살표 */
+    .temp-gap .down { color: #2563eb; } /* 파란색 화살표 */
+
+
+    /* 서브 정보 (체감, 습도 등) */
+    .sub-info {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #666;
+        margin-bottom: 20px;
+    }
+
+    /* 하단 4개 상세 박스 레이아웃 */
+    .detail-boxes {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 8px;
+        width: 100%;
+        margin-bottom: 16px;
+    }
+
+    /* 상세 박스 공통 디자인 */
+    .info-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 4px;
+        border-radius: 8px;
+        gap: 4px;
+    }
+
+    .info-box .label {
+        font-size: 0.75rem;
+        color: #555;
+    }
+
+    .info-box .value {
+        font-size: 1rem;
+        font-weight: bold;
+    }
+
+    /* 상세 박스 개별 색상 (사진 참고) */
+    .info-box.dust, .info-box.ultra-dust { background-color: #eff6ff; color: #3b82f6; }
+    .info-box.uv { background-color: #f0fdf4; color: #22c55e; }
+    .info-box.sunrise { background-color: #fffbeb; color: #f59e0b; }
+    .info-box.sunset { background-color: #ffe4dc; color: #f5360b; }
+
+    .selected-info {
+        font-size: 1.1rem;
+        background-color: #b8ffa7;
+        padding: 5px; 
+        border-radius: 5px; 
+        color: rgb(17, 117, 0);
+    }
+
+    /* 상세보기 버튼 수정 */
+    .detail-btn {
+        width: 100%;
+        padding: 10px;
+        background-color: #f3f4f6;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        color: #555;
+        margin-top: auto;
+    }
+    .detail-btn:hover {
+        background-color: #e5e7eb;
+    }
+</style>
